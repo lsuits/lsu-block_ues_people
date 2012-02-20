@@ -1,6 +1,6 @@
-# UES Participants
+# UES People
 
-UES Participants is a [UES][ues] companion block intended for allowing
+UES People is a [UES][ues] companion block intended for allowing
 instructors to view selected meta data about their enrolled students.
 
 The defaults include:

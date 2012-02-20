@@ -1,3 +1,3 @@
 <?php
 
-$string['pluginname'] = 'UES Participants';
+$string['pluginname'] = 'UES People';
