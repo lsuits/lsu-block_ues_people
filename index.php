@@ -64,10 +64,15 @@ add_to_log($course->id, 'ues_people', 'view all', 'index.php?id='.$course->id, '
 
 $all_sections = ues_section::from_course($course);
 
-$meta_names = ues_user::get_meta_names();
+$meta_names = ues_people::outputs();
 
-$using_meta_sort = in_array($meta, $meta_names);
-$using_section_sort = $meta == 'section';
+$using_section_sort = $using_meta_sort = false;
+
+if ($meta == 'section' and isset($meta_names[$meta])) {
+    $using_section_sort = true;
+} else if (isset($meta_names[$meta])) {
+    $using_meta_sort = true;
+}
 
 $PAGE->set_title("$course->shortname: " . get_string('participants'));
 $PAGE->set_heading($course->fullname);
@@ -137,7 +142,16 @@ if ($using_meta_sort) {
 
 $sql = "$select $from $where $sort";
 
-$users = $DB->get_records_sql($sql, $params, $page, $perpage);
+$users = ues_user::by_sql($sql, $params, $page, $perpage, function($user) {
+    $user->fill_meta();
+
+    $underlying = new stdClass;
+    foreach (get_object_vars($user) as $field => $value) {
+        $underlying->$field = $value;
+    }
+
+    return $underlying;
+});
 
 echo $OUTPUT->header();
 
@@ -149,8 +163,9 @@ $headers = array(
     get_string('email')
 );
 
-$headers[] = $_s('sec_number');
-$headers[] = $_s('credit_hours');
+foreach ($meta_names as $output) {
+    $headers[] = $output->name;
+}
 
 $table->head = $headers;
 
@@ -159,12 +174,16 @@ foreach ($users as $user) {
     $line[] = $OUTPUT->user_picture($user, array('courseid' => $id));
     $line[] = fullname($user);
     $line[] = $user->email;
-    $line[] = $user->sec_number;
-    $line[] = $user->credit_hours;
+
+    foreach ($meta_names as $output) {
+        $line[] = $output->format($user);
+    }
 
     $table->data[] = new html_table_row($line);
 }
 
+echo html_writer::start_tag('div', array('class' => 'no-overflow'));
 echo html_writer::table($table);
+echo html_writer::end_tag('div');
 
 echo $OUTPUT->footer();

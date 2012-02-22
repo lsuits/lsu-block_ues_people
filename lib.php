@@ -22,4 +22,36 @@ abstract class ues_people {
 
         return $DB->get_records_sql('SELECT * FROM {role} WHERE ' . $role_sql);
     }
+
+    public static function outputs() {
+        $defaults = array('sec_number', 'credit_hours');
+        $meta_names = array_merge($defaults, ues_user::get_meta_names());
+
+        $outputs = array();
+        foreach ($meta_names as $meta) {
+            $outputs[$meta] = new ues_people_element_output($meta);
+        }
+
+        $data = new stdClass;
+        $data->outputs = $outputs;
+        events_trigger('ues_people_outputs', $data);
+
+        return $data->outputs;
+    }
+}
+
+class ues_people_element_output {
+    var $name;
+
+    function __construct($name) {
+        $this->name = $name;
+    }
+
+    function format($user) {
+        if (isset($user->{$this->name})) {
+            return $user->{$this->name};
+        } else {
+            return '';
+        }
+    }
 }
