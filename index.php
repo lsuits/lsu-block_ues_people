@@ -4,6 +4,8 @@ require_once '../../config.php';
 require_once $CFG->dirroot . '/enrol/ues/publiclib.php';
 ues::require_daos();
 
+require_once 'lib.php';
+
 if (!defined('DEFAULT_PAGE_SIZE')) {
     define('DEFAULT_PAGE_SIZE', 20);
 }
@@ -40,10 +42,10 @@ require_capability('moodle/course:viewparticipants', $context);
 
 $_s = ues::gen_str('block_ues_people');
 
-$user = ues_user::get_by_id($USER->id);
+$user = ues_user::get(array('id' => $USER->id));
 
 $allroles = get_all_roles();
-$roles = get_profile_roles($context);
+$roles = ues_people::ues_roles();
 
 $allrolenames = array();
 $rolenames = array(0 => get_string('allparticipants'));
@@ -59,8 +61,6 @@ if (empty($rolenames[$roleid])) {
 }
 
 add_to_log($course->id, 'ues_people', 'view all', 'index.php?id='.$course->id, '');
-
-$groupmode = groups_get_course_groupmode($course);
 
 // UES section enrollment
 $all_sections = ues_section::from_course($course);
@@ -106,11 +106,6 @@ $meta_names = ues_user::get_meta_names();
 $using_meta_sort = in_array($meta, $meta_names);
 $using_section_sort = $meta == 'section';
 
-$is_separate_groups = (
-    $course->groupmode == SEPARATEGROUPS and
-    !has_capability('moodle/site:accessallgroups', $context)
-);
-
 $PAGE->set_title("$course->shortname: " . get_string('participants'));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagetype('course-view-' . $course->format);
@@ -118,6 +113,19 @@ $PAGE->set_pagetype('course-view-' . $course->format);
 echo $OUTPUT->header();
 
 $table = new html_table();
+
+$headers = array(
+    get_string('userpic'),
+    get_string('firstname') . ' / ' . get_string('lastname'),
+    get_string('email')
+);
+
+$headers[] = $_s('sec_number');
+$headers[] = $_s('credit_hours');
+
+$table->head = $headers;
+
+list($esql, $params) = get_enrolled_sql($context);
 
 echo html_writer::table($table);
 
