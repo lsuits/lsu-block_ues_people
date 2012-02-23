@@ -51,6 +51,32 @@ abstract class ues_people {
         return $bar;
     }
 
+    public static function sortable($url, $label, $field) {
+        $current = optional_param('meta', 'lastname', PARAM_TEXT);
+        $dir = optional_param('dir', 'ASC', PARAM_TEXT);
+
+        if ($current == $field) {
+            global $OUTPUT;
+
+            if ($dir == 'ASC') {
+                $path = 'down';
+                $new_dir = 'DESC';
+            } else {
+                $path = 'up';
+                $new_dir = 'ASC';
+            }
+            $murl = new moodle_url($url, array('meta' => $field, 'dir' => $new_dir));
+
+            $link = html_writer::link($murl, $label);
+            $link .= ' ' . $OUTPUT->pix_icon('t/'. $path, $dir);
+            return $link;
+        } else {
+            $murl = new moodle_url($url, array('meta' => $field, 'dir' => 'ASC'));
+
+            return html_writer::link($murl, $label);
+        }
+    }
+
     public static function outputs() {
         $defaults = self::defaults();
 

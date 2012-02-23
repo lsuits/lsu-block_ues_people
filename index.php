@@ -80,7 +80,7 @@ $meta_names = ues_people::outputs();
 
 $using_meta_sort = $using_ues_sort = false;
 
-if (($meta == 'section' or $meta == 'credit_hours') and isset($meta_names[$meta])) {
+if (($meta == 'sec_number' or $meta == 'credit_hours') and isset($meta_names[$meta])) {
     $using_ues_sort = true;
 } else if (isset($meta_names[$meta])) {
     $using_meta_sort = true;
@@ -209,13 +209,17 @@ $paging_bar = $OUTPUT->paging_bar($count, $page, $perpage, $base_with_params(arr
     'roleid' => $roleid,
     'group' => $groupid,
     'silast' => $silast,
-    'sifirst' => $sifirst
+    'sifirst' => $sifirst,
+    'meta' => $meta,
+    'dir' => $sortdir
 )));
 
 if (count($rolenames) > 1) {
     $cr = get_string('currentrole', 'role');
 
-    $rolesnameurl = $base_with_params(array('group' => $groupid));
+    $rolesnameurl = $base_with_params(array(
+        'group' => $groupid, 'meta' => $meta, 'dir' => $sortdir
+    ));
 
     echo html_writer::start_tag('div', array('class' => 'rolesform'));
     echo html_writer::tag('label', $cr . '&nbsp;', array('for' => 'rolesform_jump'));
@@ -223,7 +227,9 @@ if (count($rolenames) > 1) {
     echo html_writer::end_tag('div');
 }
 
-$groups_url = $base_with_params(array('roleid' => $roleid));
+$groups_url = $base_with_params(array(
+    'roleid' => $roleid, 'meta' => $meta, 'dir' => $sortdir
+));
 echo groups_print_course_menu($course, $groups_url);
 
 if ($roleid > 0) {
@@ -247,14 +253,24 @@ if ($roleid > 0) {
 
 $table = new html_table();
 
-$headers = array(
-    get_string('userpic'),
-    get_string('firstname') . ' / ' . get_string('lastname'),
-    get_string('email')
+$sort_url = $base_with_params(array(
+    'roleid' => $roleid,
+    'group' => $groupid,
+    'silast' => $silast,
+    'sifirst' => $sifirst,
+    'page' => $page
+));
+
+$name = new html_table_cell(
+    ues_people::sortable($sort_url, get_string('firstname'), 'firstname') . ' / ' .
+    ues_people::sortable($sort_url, get_string('lastname'), 'lastname')
 );
+$name->colspan = 2;
+
+$headers = array($name, ues_people::sortable($sort_url, get_string('email'), 'email'));
 
 foreach ($meta_names as $output) {
-    $headers[] = $output->name;
+    $headers[] = ues_people::sortable($sort_url, $output->name, $output->field);
 }
 
 // Transform function to optimize table formatting
@@ -286,7 +302,9 @@ $table->head = $headers;
 $offset = $perpage * $page;
 $table->data = ues_user::by_sql($sql, $params, $offset, $perpage, $to_row);
 
-$default_params = array('roleid' => $roleid, 'group' => $groupid);
+$default_params = array(
+    'roleid' => $roleid, 'group' => $groupid, 'meta' => $meta, 'dir' => $sortdir
+);
 
 $firstinitial = $base_with_params($default_params + array('silast' => $silast));
 echo ues_people::initial_bars(get_string('firstname'), 'sifirst', $firstinitial);
