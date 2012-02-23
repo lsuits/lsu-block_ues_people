@@ -66,10 +66,10 @@ $all_sections = ues_section::from_course($course);
 
 $meta_names = ues_people::outputs();
 
-$using_section_sort = $using_meta_sort = false;
+$using_meta_sort = $using_ues_sort = false;
 
-if ($meta == 'section' and isset($meta_names[$meta])) {
-    $using_section_sort = true;
+if (($meta == 'section' or $meta == 'credit_hours') and isset($meta_names[$meta])) {
+    $using_ues_sort = true;
 } else if (isset($meta_names[$meta])) {
     $using_meta_sort = true;
 }
@@ -78,8 +78,8 @@ $PAGE->set_title("$course->shortname: " . get_string('participants'));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
-$select = 'SELECT u.id, u.firstname, u.lastname, u.email, sec.sec_number, u.deleted,
-                  u.picture, u.imagealt, u.lang, u.timezone, stu.credit_hours';
+$select = 'SELECT u.id, u.firstname, u.lastname, u.email, ues.sec_number, u.deleted,
+                  u.picture, u.imagealt, u.lang, u.timezone, ues.credit_hours';
 $joins = array('FROM {user} u');
 
 list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'ctx');
@@ -90,8 +90,32 @@ $joins[] = $ccjoin;
 list($esql, $params) = get_enrolled_sql($context, '', $groupid);
 
 $joins[] = "JOIN ($esql) e ON e.id = u.id";
-$joins[] = "LEFT JOIN " . ues_student::tablename('stu') . " ON u.id = stu.userid";
-$joins[] = "JOIN " . ues_section::tablename('sec') . " ON stu.sectionid = sec.id";
+
+$unions = array();
+
+$selects = array(
+    't' =>
+    'SELECT t.userid, t.sectionid, NULL AS sec_number, NULL AS credit_hours
+        FROM '.ues_teacher::tablename('t').' WHERE ',
+    'stu' =>
+    'SELECT stu.userid, stu.sectionid, sec.sec_number, stu.credit_hours
+        FROM '.ues_student::tablename('stu').'
+        JOIN '.ues_section::tablename('sec').' ON sec.id = stu.sectionid WHERE '
+);
+
+$sectionids = array_keys($all_sections);
+
+foreach ($selects as $key => $union) {
+    $union_where = ues::where()
+        ->sectionid->in($sectionids)
+        ->status->in(ues::ENROLLED, ues::PROCESSED);
+
+    $unions[$key] = '(' . $union . $union_where->sql(function($k) use ($key) {
+        return $key . '.' . $k;
+    }) . ' GROUP BY userid)';
+}
+
+$joins[] = 'JOIN ('. implode(' UNION ', $unions) . ') AS ues ON ues.userid = u.id';
 
 if ($using_meta_sort) {
     $meta_table = ues_user::metatablename('um');
@@ -103,9 +127,7 @@ if ($using_meta_sort) {
 
 $from = implode("\n", $joins);
 
-$wheres = ues::where()
-    ->sectionid->in(array_keys($all_sections))
-    ->status->in(ues::ENROLLED, ues::PROCESSED);
+$wheres = ues::where()->sectionid->in($sectionids);
 
 if ($sifirst != 'all') {
     $wheres->firstname->starts_with($sifirst);
@@ -126,34 +148,43 @@ if ($roleid) {
 
 $where = $wheres->is_empty() ? '' : 'WHERE ' . $wheres->sql(function($k) {
     switch ($k) {
-        case 'sectionid': return 'stu.' . $k;
-        case 'status': return 'stu.' . $k;
+        case 'sectionid': return 'ues.' . $k;
         default: return 'u.' . $k;
     }
 });
 
 if ($using_meta_sort) {
     $sort = 'ORDER BY um.value ' . $sortdir;
-} else if ($using_section_sort) {
-    $sort = 'ORDER BY sec.sec_number ' . $sortdir;
+} else if ($using_ues_sort) {
+    $sort = 'ORDER BY ues.' . $meta . ' ' . $sortdir;
 } else {
     $sort = 'ORDER BY u.' . $meta . ' ' . $sortdir;
 }
 
 $sql = "$select $from $where $sort";
 
-$users = ues_user::by_sql($sql, $params, $page, $perpage, function($user) {
-    $user->fill_meta();
-
-    $underlying = new stdClass;
-    foreach (get_object_vars($user) as $field => $value) {
-        $underlying->$field = $value;
-    }
-
-    return $underlying;
-});
+$count = $DB->count_records_sql("SELECT COUNT(u.id) $from $where", $params);
 
 echo $OUTPUT->header();
+
+if ($roleid > 0) {
+    $a->number = $count;
+    $a->role = $rolenames[$roleid];
+
+    $heading = format_string(get_string('xuserswiththerole', 'role', $a));
+
+    if ($currentgroup and $group) {
+        $a->group = $group->name;
+        $heading .= ' ' . format_string(get_string('ingroup', 'role', $a));
+    }
+
+    $heading .= ": $a->number";
+    echo $OUTPUT->heading($heading, 3);
+} else {
+    $strall = get_string('allparticipants');
+    $sep = get_string('labelsep', 'langconfig');
+    echo $OUTPUT->heading($strall . $sep . $count, 3);
+}
 
 $table = new html_table();
 
@@ -167,11 +198,20 @@ foreach ($meta_names as $output) {
     $headers[] = $output->name;
 }
 
-$table->head = $headers;
+// Transform function to optimize table formatting
+$to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
 
-foreach ($users as $user) {
+    // Needed for user_picture
+    $underlying = new stdClass;
+    foreach (get_object_vars($user) as $field => $value) {
+        $underlying->$field = $value;
+    }
+
+    // Needed for user meta
+    $user->fill_meta();
+
     $line = array();
-    $line[] = $OUTPUT->user_picture($user, array('courseid' => $id));
+    $line[] = $OUTPUT->user_picture($underlying, array('courseid' => $id));
     $line[] = fullname($user);
     $line[] = $user->email;
 
@@ -179,8 +219,11 @@ foreach ($users as $user) {
         $line[] = $output->format($user);
     }
 
-    $table->data[] = new html_table_row($line);
-}
+    return new html_table_row($line);
+};
+
+$table->head = $headers;
+$table->data = ues_user::by_sql($sql, $params, $page, $perpage, $to_row);
 
 echo html_writer::start_tag('div', array('class' => 'no-overflow'));
 echo html_writer::table($table);
