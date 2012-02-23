@@ -60,6 +60,18 @@ if (empty($rolenames[$roleid])) {
     print_error('noparticipants');
 }
 
+$groupmode = groups_get_course_groupmode($course);
+$currentgroup = groups_get_course_group($course, true);
+
+if (empty($currentgroup)) {
+    $currentgroup = null;
+}
+
+$isseparategroups = (
+    $course->groupmode == SEPARATEGROUPS and
+    !has_capability('moodle/site:accessallgroups', $context)
+);
+
 add_to_log($course->id, 'ues_people', 'view all', 'index.php?id='.$course->id, '');
 
 $all_sections = ues_section::from_course($course);
@@ -77,6 +89,18 @@ if (($meta == 'section' or $meta == 'credit_hours') and isset($meta_names[$meta]
 $PAGE->set_title("$course->shortname: " . get_string('participants'));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagetype('course-view-' . $course->format);
+
+echo $OUTPUT->header();
+
+if ($isseparategroups and (!$currentgroup)) {
+    echo $OUTPUT->heading(get_string('notingroup'));
+    echo $OUTPUT->footer();
+    exit;
+}
+
+if ($currentgroup) {
+    $group = groups_get_group($currentgroup);
+}
 
 $select = 'SELECT u.id, u.firstname, u.lastname, u.email, ues.sec_number, u.deleted,
                   u.picture, u.imagealt, u.lang, u.timezone, ues.credit_hours';
@@ -138,10 +162,11 @@ if ($silast != 'all') {
 }
 
 if ($roleid) {
+    $params['roleid'] = $roleid;
     $contextlist = get_related_contexts_string($context);
 
     $sub = 'SELECT userid FROM {role_assignments}
-        WHERE roleid = :roleid AND context ' . $contextlist;
+        WHERE roleid = :roleid AND contextid ' . $contextlist;
 
     $wheres->id->raw("IN ($sub)");
 }
@@ -164,8 +189,6 @@ if ($using_meta_sort) {
 $sql = "$select $from $where $sort";
 
 $count = $DB->count_records_sql("SELECT COUNT(u.id) $from $where", $params);
-
-echo $OUTPUT->header();
 
 $base_url = new moodle_url('/blocks/ues_people/index.php', array(
     'id' => $id,
