@@ -13,7 +13,7 @@ if (!defined('DEFAULT_PAGE_SIZE')) {
 $page = optional_param('page', 0, PARAM_INT);
 $perpage = optional_param('perpage', DEFAULT_PAGE_SIZE, PARAM_INT);
 $roleid = optional_param('roleid', 0, PARAM_INT);
-$groupid = optional_param('groupid', 0, PARAM_INT);
+$groupid = optional_param('group', 0, PARAM_INT);
 $meta = optional_param('meta', 'lastname', PARAM_TEXT);
 $sortdir = optional_param('dir', 'ASC', PARAM_TEXT);
 
@@ -25,7 +25,7 @@ $id = required_param('id', PARAM_INT);
 $PAGE->set_url('/blocks/ues_people/index.php', array(
     'id' => $id,
     'roleid' => $roleid,
-    'groupid' => $groupid,
+    'group' => $groupid,
     'page' => $page,
     'perpage' => $perpage
 ));
@@ -87,7 +87,7 @@ list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'c
 $select .= $ccselect;
 $joins[] = $ccjoin;
 
-list($esql, $params) = get_enrolled_sql($context, '', $groupid);
+list($esql, $params) = get_enrolled_sql($context, NULL, $groupid);
 
 $joins[] = "JOIN ($esql) e ON e.id = u.id";
 
@@ -167,6 +167,42 @@ $count = $DB->count_records_sql("SELECT COUNT(u.id) $from $where", $params);
 
 echo $OUTPUT->header();
 
+$base_url = new moodle_url('/blocks/ues_people/index.php', array(
+    'id' => $id,
+    'perpage' => $perpage
+));
+
+$base_with_params = function($params) use ($base_url) {
+    $url = $base_url->out() . '&amp;';
+
+    $mapper = function ($key, $value) { return "$key=$value"; };
+
+    $parms = array_map($mapper, array_keys($params), array_values($params));
+
+    return $url . implode('&amp;', $parms);
+};
+
+$paging_bar = $OUTPUT->paging_bar($count, $page, $perpage, $base_with_params(array(
+    'roleid' => $roleid,
+    'group' => $groupid,
+    'silast' => $silast,
+    'sifirst' => $sifirst
+)));
+
+if (count($rolenames) > 1) {
+    $cr = get_string('currentrole', 'role');
+
+    $rolesnameurl = $base_with_params(array('group' => $groupid));
+
+    echo html_writer::start_tag('div', array('class' => 'rolesform'));
+    echo html_writer::tag('label', $cr . '&nbsp;', array('for' => 'rolesform_jump'));
+    echo $OUTPUT->single_select($rolesnameurl, 'roleid', $rolenames, $roleid, null, 'rolesform');
+    echo html_writer::end_tag('div');
+}
+
+$groups_url = $base_with_params(array('roleid' => $roleid));
+echo groups_print_course_menu($course, $groups_url);
+
 if ($roleid > 0) {
     $a->number = $count;
     $a->role = $rolenames[$roleid];
@@ -223,10 +259,24 @@ $to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
 };
 
 $table->head = $headers;
-$table->data = ues_user::by_sql($sql, $params, $page, $perpage, $to_row);
+
+$offset = $perpage * $page;
+$table->data = ues_user::by_sql($sql, $params, $offset, $perpage, $to_row);
+
+$default_params = array('roleid' => $roleid, 'group' => $groupid);
+
+$firstinitial = $base_with_params($default_params + array('silast' => $silast));
+echo ues_people::initial_bars(get_string('firstname'), 'sifirst', $firstinitial);
+
+$lastinitial = $base_with_params($default_params + array('sifirst' => $sifirst));
+echo ues_people::initial_bars(get_string('lastname'), 'silast', $lastinitial);
+
+echo $paging_bar;
 
 echo html_writer::start_tag('div', array('class' => 'no-overflow'));
 echo html_writer::table($table);
 echo html_writer::end_tag('div');
+
+echo $paging_bar;
 
 echo $OUTPUT->footer();

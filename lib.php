@@ -27,6 +27,30 @@ abstract class ues_people {
         return explode(',', get_config('block_ues_people', 'outputs'));
     }
 
+    public static function initial_bars($label, $name, $url) {
+        $current = optional_param($name, 'all', PARAM_TEXT);
+
+        $bar = html_writer::start_tag('div', array('class' => 'initialbar lastinitial'));
+        $bar .= $label . ' : ';
+
+        $letters = array('all' => get_string('all'));
+        $alpha = explode(',', get_string('alphabet', 'langconfig'));
+
+        $letters += array_combine($alpha, $alpha);
+
+        foreach ($letters as $key => $letter) {
+            if ($key == $current) {
+                $bar .= html_writer::tag('strong', $letter);
+            } else {
+                $bar .= '<a href="'. $url . '&amp;' . $name . '=' . $key.'">'.$letter.'</a>';
+            }
+        }
+
+        $bar .= html_writer::end_tag('div');
+
+        return $bar;
+    }
+
     public static function outputs() {
         $defaults = self::defaults();
 
