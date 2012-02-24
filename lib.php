@@ -108,6 +108,71 @@ abstract class ues_people {
 
         return $data->outputs;
     }
+
+    public static function control_elements($meta_names) {
+        $defaults = array(
+            'fullname' => get_string('fullname'),
+            'username' => get_string('username'),
+            'idnumber' => get_string('idnumber')
+        );
+
+        $controls = array();
+        foreach ($defaults as $field => $name) {
+            $controls[$field] = new ues_people_element_output($field, $name);
+        }
+
+        $controls += $meta_names;
+
+        return $controls;
+    }
+
+    public static function controls(array $params, $meta_names) {
+        global $OUTPUT;
+
+        $controls = self::control_elements($meta_names);
+
+        $table = new html_table();
+        $head = array();
+        $data = array();
+        foreach ($controls as $control) {
+            $head[] = $control->name;
+            $data[] = html_writer::empty_tag('input', array(
+                'type' => 'checkbox',
+                'value' => 1,
+                'checked' => 'CHECKED',
+                'name' => $control->field
+            ));
+        }
+
+        $table->head = $head;
+        $table->data[] = $data;
+
+        $html_table = html_writer::table($table);
+
+        $html = $OUTPUT->box_start();
+        $html .= html_writer::start_tag('form', array('method' => 'POST'));
+        $html .= $html_table;
+        $html .= html_writer::start_tag('div', array('class' => 'export_button'));
+        $html .= html_writer::empty_tag('input', array(
+            'type' => 'submit',
+            'name' => 'export',
+            'value' => get_string('export_entries', 'block_ues_people')
+        ));
+        $html .= html_writer::end_tag('div');
+
+        foreach ($params as $name => $value) {
+            $html .= html_writer::empty_tag('input', array(
+                'type' => 'hidden',
+                'name' => $name,
+                'value' => $value
+            ));
+        }
+
+        $html .= html_writer::end_tag('form');
+        $html .= $OUTPUT->box_end();
+
+        return $html;
+    }
 }
 
 class ues_people_element_output {

@@ -22,6 +22,16 @@ $sifirst = optional_param('sifirst', 'all', PARAM_TEXT);
 
 $id = required_param('id', PARAM_INT);
 
+$export_params = array(
+    'roleid' => $roleid,
+    'group' => $groupid,
+    'id' => $id,
+    'silast' => $silast,
+    'sifirst' => $sifirst,
+    'meta' => $meta,
+    'dir' => $sortdir
+);
+
 $PAGE->set_url('/blocks/ues_people/index.php', array(
     'id' => $id,
     'roleid' => $roleid,
@@ -90,9 +100,8 @@ $PAGE->set_title("$course->shortname: " . get_string('participants'));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
-echo $OUTPUT->header();
-
 if ($isseparategroups and (!$currentgroup)) {
+    echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('notingroup'));
     echo $OUTPUT->footer();
     exit;
@@ -103,7 +112,8 @@ if ($currentgroup) {
 }
 
 $select = 'SELECT u.id, u.firstname, u.lastname, u.email, ues.sec_number, u.deleted,
-                  u.picture, u.imagealt, u.lang, u.timezone, ues.credit_hours';
+                  u.username, u.idnumber, u.picture, u.imagealt, u.lang, u.timezone,
+                  ues.credit_hours';
 $joins = array('FROM {user} u');
 
 list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'ctx');
@@ -188,6 +198,38 @@ if ($using_meta_sort) {
 
 $sql = "$select $from $where $sort";
 
+if ($data = data_submitted() and isset($data->export)) {
+    $filename = $course->idnumber . '.csv';
+
+    header('Context-Type: text/csv');
+    header('Content-Disposition: attachment; fileName=' . $filename);
+
+    $controls = ues_people::control_elements($meta_names);
+
+    $to_csv = function ($user) use ($data, $controls) {
+        $user->fill_meta();
+
+        $line = array();
+
+        foreach ($controls as $meta => $output) {
+            if (!isset($data->$meta)) {
+                continue;
+            }
+
+            $value = $meta == 'fullname' ? fullname($user) : $output->format($user);
+
+            $line[] = '"' . $value . '"';
+        }
+
+        return implode(',', $line);
+    };
+
+    $lines = ues_user::by_sql($sql, $params, 0, 0, $to_csv);
+
+    echo implode("\n", $lines);
+    exit;
+}
+
 $count = $DB->count_records_sql("SELECT COUNT(u.id) $from $where", $params);
 
 $base_url = new moodle_url('/blocks/ues_people/index.php', array(
@@ -214,6 +256,8 @@ $paging_bar = $OUTPUT->paging_bar($count, $page, $perpage, $base_with_params(arr
     'dir' => $sortdir
 )));
 
+echo $OUTPUT->header();
+
 if (count($rolenames) > 1) {
     $cr = get_string('currentrole', 'role');
 
@@ -231,6 +275,8 @@ $groups_url = $base_with_params(array(
     'roleid' => $roleid, 'meta' => $meta, 'dir' => $sortdir
 ));
 echo groups_print_course_menu($course, $groups_url);
+
+echo ues_people::controls($export_params, $meta_names);
 
 if ($roleid > 0) {
     $a->number = $count;
@@ -267,7 +313,15 @@ $name = new html_table_cell(
 );
 $name->colspan = 2;
 
-$headers = array($name, ues_people::sortable($sort_url, get_string('email'), 'email'));
+$username = new html_table_cell(
+    ues_people::sortable($sort_url, get_string('username'), 'username')
+);
+
+$idnumber = new html_table_cell(
+    ues_people::sortable($sort_url, get_string('idnumber'), 'idnumber')
+);
+
+$headers = array($name, $username, $idnumber);
 
 foreach ($meta_names as $output) {
     $headers[] = ues_people::sortable($sort_url, $output->name, $output->field);
@@ -285,10 +339,13 @@ $to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
     // Needed for user meta
     $user->fill_meta();
 
+    $user_url = new moodle_url('/user/view.php', array('courseid' => $id, 'id' => $user->id));
+
     $line = array();
     $line[] = $OUTPUT->user_picture($underlying, array('courseid' => $id));
-    $line[] = fullname($user);
-    $line[] = $user->email;
+    $line[] = html_writer::link($user_url, fullname($user));
+    $line[] = $user->username;
+    $line[] = $user->idnumber;
 
     foreach ($meta_names as $output) {
         $line[] = $output->format($user);
