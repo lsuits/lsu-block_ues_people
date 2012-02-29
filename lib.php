@@ -126,6 +126,19 @@ abstract class ues_people {
         return $controls;
     }
 
+    public static function get_filter($meta_name) {
+        return (int)get_user_preferences('block_ues_people_filter_'.$meta_name);
+    }
+
+    public static function set_filter($meta_name, $value) {
+        return set_user_preference('block_ues_people_filter_'.$meta_name, (int)$value);
+    }
+
+    public static function is_filtered($meta_name) {
+        $pref = self::get_filter($meta_name);
+        return $pref === 0;
+    }
+
     public static function controls(array $params, $meta_names) {
         global $OUTPUT;
 
@@ -134,14 +147,19 @@ abstract class ues_people {
         $table = new html_table();
         $head = array();
         $data = array();
-        foreach ($controls as $control) {
+        foreach ($controls as $meta => $control) {
             $head[] = $control->name;
-            $data[] = html_writer::empty_tag('input', array(
+            $attrs = array(
                 'type' => 'checkbox',
                 'value' => 1,
-                'checked' => 'CHECKED',
                 'name' => $control->field
-            ));
+            );
+
+            if (!self::is_filtered($meta)) {
+                $attrs['checked'] = 'CHECKED';
+            }
+
+            $data[] = html_writer::empty_tag('input', $attrs);
         }
 
         $table->head = $head;
@@ -157,6 +175,11 @@ abstract class ues_people {
             'type' => 'submit',
             'name' => 'export',
             'value' => get_string('export_entries', 'block_ues_people')
+        ));
+        $html .= ' ' . html_writer::empty_tag('input', array(
+            'type' => 'submit',
+            'name' => 'save',
+            'value' => get_string('savechanges')
         ));
         $html .= html_writer::end_tag('div');
 

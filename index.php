@@ -206,36 +206,45 @@ if ($using_meta_sort) {
 
 $sql = "$select $from $where $sort";
 
-if ($data = data_submitted() and isset($data->export)) {
-    $filename = $course->idnumber . '.csv';
-
-    header('Context-Type: text/csv');
-    header('Content-Disposition: attachment; fileName=' . $filename);
-
+if ($data = data_submitted()) {
     $controls = ues_people::control_elements($meta_names);
 
-    $to_csv = function ($user) use ($data, $controls) {
-        $user->fill_meta();
+    if (isset($data->export)) {
+        $filename = $course->idnumber . '.csv';
 
-        $line = array();
+        header('Context-Type: text/csv');
+        header('Content-Disposition: attachment; fileName=' . $filename);
 
-        foreach ($controls as $meta => $output) {
-            if (!isset($data->$meta)) {
-                continue;
+        $to_csv = function ($user) use ($data, $controls) {
+            $user->fill_meta();
+
+            $line = array();
+
+            foreach ($controls as $meta => $output) {
+                if (!isset($data->$meta)) {
+                    continue;
+                }
+
+                $value = $meta == 'fullname' ? fullname($user) : $output->format($user);
+
+                $line[] = '"' . $value . '"';
             }
 
-            $value = $meta == 'fullname' ? fullname($user) : $output->format($user);
+            return implode(',', $line);
+        };
 
-            $line[] = '"' . $value . '"';
+        $lines = ues_user::by_sql($sql, $params, 0, 0, $to_csv);
+
+        echo implode("\n", $lines);
+        exit;
+    }
+
+    if (isset($data->save)) {
+        $prefix = 'block_ues_people_filter_';
+        foreach ($controls as $meta => $output) {
+            ues_people::set_filter($meta, isset($data->$meta));
         }
-
-        return implode(',', $line);
-    };
-
-    $lines = ues_user::by_sql($sql, $params, 0, 0, $to_csv);
-
-    echo implode("\n", $lines);
-    exit;
+    }
 }
 
 $count = $DB->count_records_sql("SELECT COUNT(u.id) $from $where", $params);
@@ -315,30 +324,33 @@ $sort_url = $base_with_params(array(
     'page' => $page
 ));
 
+$user_fields = array(
+    'username' => new ues_people_element_output('username', get_string('username')),
+    'idnumber' => new ues_people_element_output('idnumber', get_string('idnumber'))
+);
+
+$meta_names = array_merge($user_fields, $meta_names);
+
 $name = new html_table_cell(
     ues_people::sortable($sort_url, get_string('firstname'), 'firstname') . ' / ' .
     ues_people::sortable($sort_url, get_string('lastname'), 'lastname')
 );
 $name->attributes['class'] = 'fullname';
 $name->colspan = 2;
+if (ues_people::is_filtered('fullname')) {
+    $name->style = 'display: none;';
+}
 
-$username = new html_table_cell(
-    ues_people::sortable($sort_url, get_string('username'), 'username')
-);
-$username->attributes['class'] = 'username';
-
-$idnumber = new html_table_cell(
-    ues_people::sortable($sort_url, get_string('idnumber'), 'idnumber')
-);
-$idnumber->attributes['class'] = 'idnumber';
-
-$headers = array($name, $username, $idnumber);
+$headers = array($name);
 
 foreach ($meta_names as $output) {
     $cell = new html_table_cell(
         ues_people::sortable($sort_url, $output->name, $output->field)
     );
     $cell->attributes['class'] = $output->field;
+    if (ues_people::is_filtered($output->field)) {
+        $cell->style = 'display: none;';
+    }
     $headers[] = $cell;
 }
 
@@ -357,25 +369,25 @@ $to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
     $user_url = new moodle_url('/user/view.php', array('courseid' => $id, 'id' => $user->id));
 
     $line = array();
-    $cell = new html_table_cell($OUTPUT->user_picture($underlying, array('courseid' => $id)));
+    $pic = new html_table_cell($OUTPUT->user_picture($underlying, array('courseid' => $id)));
+    $pic->attributes['class'] = 'fullname';
+
+    $cell= new html_table_cell(html_writer::link($user_url, fullname($user)));
     $cell->attributes['class'] = 'fullname';
-    $line[] = $cell;
 
-    $cell = new html_table_cell(html_writer::link($user_url, fullname($user)));
-    $cell->attributes['class'] = 'fullname';
-    $line[] = $cell;
+    if (ues_people::is_filtered('fullname')) {
+        $pic->style = $cell->style = 'display: none;';
+    }
 
-    $cell = new html_table_cell($user->username);
-    $cell->attributes['class'] = 'username';
-    $line[] = $cell;
-
-    $cell = new html_table_cell($user->idnumber);
-    $cell->attributes['class'] = 'idnumber';
+    $line[] = $pic;
     $line[] = $cell;
 
     foreach ($meta_names as $output) {
         $cell = new html_table_cell($output->format($user));
         $cell->attributes['class'] = $output->field;
+        if (ues_people::is_filtered($output->field)) {
+            $cell->style = 'display: none;';
+        }
         $line[] = $cell;
     }
 
