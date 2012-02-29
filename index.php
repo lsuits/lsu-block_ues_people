@@ -44,11 +44,23 @@ $PAGE->set_pagelayout('incourse');
 
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 
+$all_sections = ues_section::from_course($course);
+
 require_login($course);
 
 $context = get_context_instance(CONTEXT_COURSE, $id);
 
 require_capability('moodle/course:viewparticipants', $context);
+
+$can_view = (
+    has_capability('moodle/site:accessallgroups', $context) or
+    has_capability('block/ues_people:viewmeta', $context) or
+    ues_user::is_teacher_in($all_sections)
+);
+
+if (!$can_view) {
+    redirect(new moodle_url('/course/view.php', array('id' => $id)));
+}
 
 $_s = ues::gen_str('block_ues_people');
 
@@ -83,8 +95,6 @@ $isseparategroups = (
 );
 
 add_to_log($course->id, 'ues_people', 'view all', 'index.php?id='.$course->id, '');
-
-$all_sections = ues_section::from_course($course);
 
 $meta_names = ues_people::outputs();
 

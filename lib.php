@@ -127,7 +127,7 @@ abstract class ues_people {
     }
 
     public static function get_filter($meta_name) {
-        return (int)get_user_preferences('block_ues_people_filter_'.$meta_name);
+        return (int)get_user_preferences('block_ues_people_filter_'.$meta_name, 1);
     }
 
     public static function set_filter($meta_name, $value) {
