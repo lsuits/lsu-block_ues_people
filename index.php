@@ -417,4 +417,18 @@ echo html_writer::end_tag('div');
 
 echo $paging_bar;
 
+if ($count > DEFAULT_PAGE_SIZE) {
+    if ($perpage == 5000) {
+        $other = DEFAULT_PAGE_SIZE;
+        $str = get_string('showonly', 'moodle') . ' ' . DEFAULT_PAGE_SIZE;
+    } else {
+        $other = 5000;
+        $str = get_string('showall', 'moodle', $count);
+    }
+
+    $url = new moodle_url('/blocks/ues_people/index.php',
+        $export_params + array('perpage' => $other));
+    echo html_writer::link($url, $str);
+}
+
 echo $OUTPUT->footer();
