@@ -100,6 +100,14 @@ $PAGE->set_title("$course->shortname: " . get_string('participants'));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
+$module = array(
+    'name' => 'block_ues_people',
+    'fullpath' => '/blocks/ues_people/js/module.js',
+    'requires' => array('base', 'dom')
+);
+
+$PAGE->requires->js_init_call('M.block_ues_people.init', array(), false, $module);
+
 if ($isseparategroups and (!$currentgroup)) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('notingroup'));
@@ -311,20 +319,27 @@ $name = new html_table_cell(
     ues_people::sortable($sort_url, get_string('firstname'), 'firstname') . ' / ' .
     ues_people::sortable($sort_url, get_string('lastname'), 'lastname')
 );
+$name->attributes['class'] = 'fullname';
 $name->colspan = 2;
 
 $username = new html_table_cell(
     ues_people::sortable($sort_url, get_string('username'), 'username')
 );
+$username->attributes['class'] = 'username';
 
 $idnumber = new html_table_cell(
     ues_people::sortable($sort_url, get_string('idnumber'), 'idnumber')
 );
+$idnumber->attributes['class'] = 'idnumber';
 
 $headers = array($name, $username, $idnumber);
 
 foreach ($meta_names as $output) {
-    $headers[] = ues_people::sortable($sort_url, $output->name, $output->field);
+    $cell = new html_table_cell(
+        ues_people::sortable($sort_url, $output->name, $output->field)
+    );
+    $cell->attributes['class'] = $output->field;
+    $headers[] = $cell;
 }
 
 // Transform function to optimize table formatting
@@ -342,13 +357,26 @@ $to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
     $user_url = new moodle_url('/user/view.php', array('courseid' => $id, 'id' => $user->id));
 
     $line = array();
-    $line[] = $OUTPUT->user_picture($underlying, array('courseid' => $id));
-    $line[] = html_writer::link($user_url, fullname($user));
-    $line[] = $user->username;
-    $line[] = $user->idnumber;
+    $cell = new html_table_cell($OUTPUT->user_picture($underlying, array('courseid' => $id)));
+    $cell->attributes['class'] = 'fullname';
+    $line[] = $cell;
+
+    $cell = new html_table_cell(html_writer::link($user_url, fullname($user)));
+    $cell->attributes['class'] = 'fullname';
+    $line[] = $cell;
+
+    $cell = new html_table_cell($user->username);
+    $cell->attributes['class'] = 'username';
+    $line[] = $cell;
+
+    $cell = new html_table_cell($user->idnumber);
+    $cell->attributes['class'] = 'idnumber';
+    $line[] = $cell;
 
     foreach ($meta_names as $output) {
-        $line[] = $output->format($user);
+        $cell = new html_table_cell($output->format($user));
+        $cell->attributes['class'] = $output->field;
+        $line[] = $cell;
     }
 
     return new html_table_row($line);
