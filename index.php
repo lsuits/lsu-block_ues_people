@@ -41,6 +41,7 @@ $PAGE->set_url('/blocks/ues_people/index.php', array(
 ));
 
 $PAGE->set_pagelayout('incourse');
+$PAGE->add_body_class('ues_people');
 
 $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 
