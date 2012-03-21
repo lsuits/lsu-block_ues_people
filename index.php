@@ -304,8 +304,6 @@ $groups_url = $base_with_params(array(
 ));
 echo groups_print_course_menu($course, $groups_url);
 
-echo ues_people::controls($export_params, $meta_names);
-
 if ($roleid > 0) {
     $a->number = $count;
     $a->role = $rolenames[$roleid];
@@ -441,5 +439,7 @@ if ($count > DEFAULT_PAGE_SIZE) {
         $export_params + array('perpage' => $other));
     echo html_writer::link($url, $str);
 }
+
+echo ues_people::controls($export_params, $meta_names);
 
 echo $OUTPUT->footer();
