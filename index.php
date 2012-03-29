@@ -47,6 +47,10 @@ $course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
 
 $all_sections = ues_section::from_course($course);
 
+if (empty($all_sections)) {
+    print_error('only_ues', 'block_ues_people');
+}
+
 require_login($course);
 
 $context = get_context_instance(CONTEXT_COURSE, $id);
