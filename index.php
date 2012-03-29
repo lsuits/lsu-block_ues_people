@@ -135,25 +135,23 @@ $select = 'SELECT u.id, u.firstname, u.lastname, u.email, ues.sec_number, u.dele
                   ues.credit_hours';
 $joins = array('FROM {user} u');
 
-list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'ctx');
+list($esql, $params) = get_enrolled_sql($context, NULL, $groupid, true);
+$joins[] = "JOIN ($esql) e ON e.id = u.id";
 
+list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'ctx');
 $select .= $ccselect;
 $joins[] = $ccjoin;
-
-list($esql, $params) = get_enrolled_sql($context, NULL, $groupid);
-
-$joins[] = "JOIN ($esql) e ON e.id = u.id";
 
 $unions = array();
 
 $selects = array(
     't' =>
-    'SELECT t.userid, t.sectionid, NULL AS sec_number, NULL AS credit_hours
-        FROM '.ues_teacher::tablename('t').' WHERE ',
+    'SELECT t.userid, t.sectionid, NULL AS sec_number, NULL AS credit_hours FROM '.
+    ues_teacher::tablename('t') . ' WHERE ',
     'stu' =>
-    'SELECT stu.userid, stu.sectionid, sec.sec_number, stu.credit_hours
-        FROM '.ues_student::tablename('stu').'
-        JOIN '.ues_section::tablename('sec').' ON sec.id = stu.sectionid WHERE '
+    'SELECT stu.userid, stu.sectionid, sec.sec_number, stu.credit_hours FROM '.
+    ues_student::tablename('stu') . ' JOIN '.
+    ues_section::tablename('sec').' ON (sec.id = stu.sectionid) WHERE '
 );
 
 $sectionids = array_keys($all_sections);
@@ -165,16 +163,15 @@ foreach ($selects as $key => $union) {
 
     $unions[$key] = '(' . $union . $union_where->sql(function($k) use ($key) {
         return $key . '.' . $k;
-    }) . ' GROUP BY userid)';
+    }) . ' GROUP BY ' . $key . '.userid)';
 }
 
-$joins[] = 'JOIN ('. implode(' UNION ', $unions) . ') AS ues ON ues.userid = u.id';
+$joins[] = 'JOIN ('. implode(' UNION ', $unions) . ') ues ON ues.userid = u.id';
 
 if ($using_meta_sort) {
     $meta_table = ues_user::metatablename('um');
-    $joins[] = 'LEFT JOIN ' . $meta_table. ' ON (
-        um.userid = u.id AND um.name = :metakey
-    )';
+    $joins[] = 'LEFT JOIN ' . $meta_table.
+        ' ON (um.userid = u.id AND um.name = :metakey)';
     $params['metakey'] = $meta;
 }
 
@@ -194,8 +191,7 @@ if ($roleid) {
     $params['roleid'] = $roleid;
     $contextlist = get_related_contexts_string($context);
 
-    $sub = 'SELECT userid FROM {role_assignments}
-        WHERE roleid = :roleid AND contextid ' . $contextlist;
+    $sub = 'SELECT userid FROM {role_assignments} WHERE roleid = :roleid AND contextid ' . $contextlist;
 
     $wheres->id->raw("IN ($sub)");
 }
