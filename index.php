@@ -150,10 +150,10 @@ $unions = array();
 
 $selects = array(
     't' =>
-    'SELECT t.userid, t.sectionid, NULL AS sec_number, NULL AS credit_hours FROM '.
+    "SELECT DISTINCT(t.userid), t.sectionid, '' AS sec_number, 0 AS credit_hours FROM ".
     ues_teacher::tablename('t') . ' WHERE ',
     'stu' =>
-    'SELECT stu.userid, stu.sectionid, sec.sec_number, stu.credit_hours FROM '.
+    'SELECT DISTINCT(stu.userid), stu.sectionid, sec.sec_number, stu.credit_hours FROM '.
     ues_student::tablename('stu') . ' JOIN '.
     ues_section::tablename('sec').' ON (sec.id = stu.sectionid) WHERE '
 );
@@ -167,7 +167,7 @@ foreach ($selects as $key => $union) {
 
     $unions[$key] = '(' . $union . $union_where->sql(function($k) use ($key) {
         return $key . '.' . $k;
-    }) . ' GROUP BY ' . $key . '.userid)';
+    }) . ')';
 }
 
 $joins[] = 'JOIN ('. implode(' UNION ', $unions) . ') ues ON ues.userid = u.id';
