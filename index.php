@@ -375,7 +375,7 @@ $to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
     // Needed for user meta
     $user->fill_meta();
 
-    $user_url = new moodle_url('/user/view.php', array('courseid' => $id, 'id' => $user->id));
+    $user_url = new moodle_url('/user/view.php', array('id' => $user->id, 'course' => $id));
 
     $line = array();
     $pic = new html_table_cell($OUTPUT->user_picture($underlying, array('courseid' => $id)));
