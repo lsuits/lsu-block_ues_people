@@ -378,7 +378,7 @@ $to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
     $user_url = new moodle_url('/user/view.php', array('id' => $user->id, 'course' => $id));
 
     $line = array();
-    $pic = new html_table_cell($OUTPUT->user_picture($underlying, array('courseid' => $id)));
+    $pic = new html_table_cell($OUTPUT->user_picture($underlying, array('course' => $id)));
     $pic->attributes['class'] = 'fullname';
 
     $cell= new html_table_cell(html_writer::link($user_url, fullname($user)));
