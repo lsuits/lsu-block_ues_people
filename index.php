@@ -141,7 +141,7 @@ $select = 'SELECT u.id, u.firstname, u.lastname, u.email, ues.sec_number, u.dele
                   ues.credit_hours';
 $joins = array('FROM {user} u');
 
-list($esql, $params) = get_enrolled_sql($context, NULL, $groupid, true);
+list($esql, $params) = get_enrolled_sql($context, NULL, $currentgroup, true);
 $joins[] = "JOIN ($esql) e ON e.id = u.id";
 
 list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'ctx');
