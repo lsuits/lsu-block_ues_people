@@ -1,10 +1,13 @@
 # v1.1.0
 
+- Adding student_audit information in left join
+- Adding `course` field on `ues_people_output` event [f99b0f][f99b0f]
 - Fullname is divided into two fields on export [#8][8]
 - Icons and Better language [d04077][d04077]
 - Show links on top and bottom, and persistent [#4][4]
 - Obey group viewing rules [#5][5]
 
+[f99b0f]: https://github.com/lsuits/ues_people/commit/f99b0f373a2508e3d69d6abf306fc55d9f1ae07d
 [d04077]: https://github.com/lsuits/ues_people/commit/d04077b2875939133f8531a5cc3a65a8f0f7efb4
 [4]: https://github.com/lsuits/ues_people/issues/4
 [5]: https://github.com/lsuits/ues_people/issues/5
