@@ -26,6 +26,7 @@ $sortdir = optional_param('dir', 'ASC', PARAM_TEXT);
 $silast = optional_param('silast', 'all', PARAM_TEXT);
 $sifirst = optional_param('sifirst', 'all', PARAM_TEXT);
 
+$agree_ferpa = optional_param('FERPA',null,PARAM_INT);
 $export_params = array(
     'roleid' => $roleid,
     'group' => $groupid,
@@ -345,6 +346,7 @@ $user_fields = array(
     'idnumber' => new ues_people_element_output('idnumber', get_string('idnumber'))
 );
 
+
 $meta_names = array_merge($user_fields, $meta_names);
 
 $name = new html_table_cell(
@@ -437,7 +439,7 @@ echo html_writer::end_tag('div');
 echo $paging_bar;
 
 echo ues_people::show_links($export_params, $count, $perpage);
-
+//$meta_names = array_merge($meta_names, array("FERPA?"))
 echo ues_people::controls($export_params, $meta_names);
 
 echo $OUTPUT->footer();
