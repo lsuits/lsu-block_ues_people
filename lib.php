@@ -211,7 +211,7 @@ abstract class ues_people {
             'id'        => 'ferpa',
             'type'      => 'checkbox',
             'class'     => "req",
-            'value'     => 0,
+            'value'     => 1,
             'name'      => 'FERPA'
         );
         $ferpa_check =  html_writer::empty_tag('input', $attr);
