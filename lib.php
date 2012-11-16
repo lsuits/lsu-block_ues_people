@@ -208,13 +208,16 @@ abstract class ues_people {
          * FERPA row
          */
         $attr = array(
-            'type'  => 'checkbox',
-            'value' => 1,
-            'name'  => 'FERPA'
+            'id'        => 'ferpa',
+            'type'      => 'checkbox',
+            'class'     => "req",
+            'value'     => 0,
+            'name'      => 'FERPA'
         );
         $ferpa_check =  html_writer::empty_tag('input', $attr);
 
-        $ferpa_warning = get_string('missing_ferpa_required', 'grades'); 
+
+        $ferpa_warning = html_writer::tag('span',get_string('missing_ferpa_required', 'grades'), array('id' => 'ferpa-warning')); 
         $ferpa_cell = new html_table_cell($ferpa_check." ".$ferpa_warning);
         $ferpa_cell->colspan = count($meta_names)-1;
         $ferpa_row = new html_table_row(array($ferpa_cell));
@@ -232,8 +235,9 @@ abstract class ues_people {
         $html .= html_writer::empty_tag('br');
         $html .= html_writer::start_tag('div', array('class' => 'export_button'));
         $html .= html_writer::empty_tag('input', array(
-            'type' => 'submit',
-            'name' => 'export',
+            'id'    => 'export',
+            'type'  => 'submit',
+            'name'  => 'export',
             'value' => get_string('export_entries', 'block_ues_people')
         ));
         $html .= ' ' . html_writer::empty_tag('input', array(

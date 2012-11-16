@@ -15,4 +15,13 @@ M.block_ues_people.init = function(Y) {
             Y.all('.' + name).each(toggle(checked));
         });
     });
-};
+    Y.one('#export').on('click', function(e) {
+        var ferpa       = Y.one('#ferpa');
+        var ferpa-warn  = Y.one('#ferpa-warning');
+        var agree_ferpa = ferpa.get('checked');
+        if(!agree_ferpa){
+            e.preventDefault();
+            alert("You Must agree to adhere to FERPA privacy requriements");
+        }
+    });
+}

@@ -27,6 +27,10 @@ $silast = optional_param('silast', 'all', PARAM_TEXT);
 $sifirst = optional_param('sifirst', 'all', PARAM_TEXT);
 
 $agree_ferpa = optional_param('FERPA',null,PARAM_INT);
+if(!$agree_ferpa){
+//    die("you MUST agree");
+}
+
 $export_params = array(
     'roleid' => $roleid,
     'group' => $groupid,
@@ -223,6 +227,11 @@ if ($using_meta_sort) {
 $sql = "$select $from $where $sort";
 
 if ($data = data_submitted()) {
+
+    if(!$agree_ferpa){        
+        header('Location: '.$PAGE->url);
+    }
+
     $controls = ues_people::control_elements($meta_names);
 
     if (isset($data->export)) {
