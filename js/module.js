@@ -14,14 +14,14 @@ M.block_ues_people.init = function(Y) {
             var checked = checkbox.getDOMNode().checked;
             Y.all('.' + name).each(toggle(checked));
         });
-    });
+    }); 
     Y.one('#export').on('click', function(e) {
         var ferpa       = Y.one('#ferpa');
         var ferpa_warn  = Y.one('#ferpa-warning');
         var agree_ferpa = ferpa.get('checked');
         if(!agree_ferpa){
             e.preventDefault();
-            ferpa_warn.set('style', 'color:red');
+            ferpa_warn.setStyle('color', 'red');
             alert("You Must agree to adhere to FERPA privacy requriements");
         }
     });
