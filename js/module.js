@@ -22,7 +22,6 @@ M.block_ues_people.init = function(Y) {
         if(!agree_ferpa){
             e.preventDefault();
             ferpa_warn.setStyle('color', 'red');
-            alert("You Must agree to adhere to FERPA privacy requriements");
         }
     });
 }
