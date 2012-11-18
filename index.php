@@ -445,7 +445,6 @@ echo html_writer::end_tag('div');
 echo $paging_bar;
 
 echo ues_people::show_links($export_params, $count, $perpage);
-//$meta_names = array_merge($meta_names, array("FERPA?"))
 echo ues_people::controls($export_params, $meta_names);
 
 echo $OUTPUT->footer();
