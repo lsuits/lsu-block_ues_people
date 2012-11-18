@@ -27,9 +27,6 @@ $silast = optional_param('silast', 'all', PARAM_TEXT);
 $sifirst = optional_param('sifirst', 'all', PARAM_TEXT);
 
 $agree_ferpa = optional_param('FERPA',null,PARAM_INT);
-if(!$agree_ferpa){
-//    die("you MUST agree");
-}
 
 $export_params = array(
     'roleid' => $roleid,
