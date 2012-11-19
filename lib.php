@@ -203,7 +203,13 @@ abstract class ues_people {
         $table->head = $head;
         $table->data[] = $data;
         
-        $attr = array(  //  FERPA agree checkbox  
+        //  FERPA 
+        $ferpa_warning  = html_writer::tag('span',get_string(
+                                                'missing_ferpa_required', 'grades'), 
+                                                array('id' => 'ferpa-warning')
+                                            ); 
+        //build checkbox
+        $attr = array(  
             'id'        => 'ferpa',
             'type'      => 'checkbox',
             'class'     => "req",
@@ -211,20 +217,18 @@ abstract class ues_people {
             'name'      => 'FERPA'
         );
         $ferpa_check    =  html_writer::empty_tag('input', $attr);
-        $ferpa_warning  = html_writer::tag('span',get_string(
-                                                'missing_ferpa_required', 'grades'), 
-                                                array('id' => 'ferpa-warning')
-                                            ); 
-        $ferpa_row      = new html_table_row(array($ferpa_cell));
 
         $html_table     = html_writer::table($table);
 
         $html = $OUTPUT->box_start();
         $html .= html_writer::start_tag('form', array('method' => 'POST'));
         $html .= $html_table;
+
+        //output ferpa
         $html .= html_writer::empty_tag('br');
         $html .= html_writer::tag('p', $ferpa_warning." ".$ferpa_check, array('id' => 'id_ferpa_required'));
         $html .= html_writer::empty_tag('br');
+
         $html .= html_writer::start_tag('div', array('class' => 'export_button'));
         $html .= html_writer::empty_tag('input', array(
             'id'    => 'export',

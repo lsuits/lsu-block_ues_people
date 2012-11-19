@@ -21,6 +21,8 @@ M.block_ues_people.init = function(Y) {
         var agree_ferpa = ferpa.get('checked');
         if(!agree_ferpa){
             e.preventDefault();
+            //this sets a style attribute on the element; 
+            //should set a css class or id
             ferpa_warn.setStyle('color', 'red');
         }
     });
