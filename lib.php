@@ -177,7 +177,36 @@ abstract class ues_people {
         return $pref === 0;
     }
 
-    public static function controls(array $params, $meta_names) {
+    public static function ferpa_control($disagree){
+        //  FERPA 
+        $attr = array(
+            'id'    =>  'ferpa-warning'
+        );
+        $attr['style'] = is_null($disagree) ? null : "color:red"; 
+
+        $ferpa_warning  = html_writer::tag('span',get_string('missing_ferpa_required', 'grades'), $attr); 
+        unset($attr);
+
+        //build checkbox
+        $attr = array(  
+            'id'        => 'ferpa',
+            'type'      => 'checkbox',
+            'class'     => "req",
+            'value'     => 1,
+            'name'      => 'FERPA'
+        );
+
+
+        $ferpa_check    =  html_writer::empty_tag('input', $attr);
+
+        //output ferpa
+        $html  = html_writer::empty_tag('br');
+        $html .= html_writer::tag('p', $ferpa_warning." ".$ferpa_check, array('id' => 'id_ferpa_required'));
+        $html .= html_writer::empty_tag('br');
+        return $html;
+    }
+
+    public static function controls(array $params, $meta_names, $disagree) {
         global $OUTPUT;
 
         $controls = self::control_elements($meta_names);
@@ -203,32 +232,13 @@ abstract class ues_people {
         $table->head = $head;
         $table->data[] = $data;
         
-        //  FERPA 
-        $ferpa_warning  = html_writer::tag('span',get_string(
-                                                'missing_ferpa_required', 'grades'), 
-                                                array('id' => 'ferpa-warning')
-                                            ); 
-        //build checkbox
-        $attr = array(  
-            'id'        => 'ferpa',
-            'type'      => 'checkbox',
-            'class'     => "req",
-            'value'     => 1,
-            'name'      => 'FERPA'
-        );
-        $ferpa_check    =  html_writer::empty_tag('input', $attr);
 
         $html_table     = html_writer::table($table);
 
         $html = $OUTPUT->box_start();
         $html .= html_writer::start_tag('form', array('method' => 'POST'));
         $html .= $html_table;
-
-        //output ferpa
-        $html .= html_writer::empty_tag('br');
-        $html .= html_writer::tag('p', $ferpa_warning." ".$ferpa_check, array('id' => 'id_ferpa_required'));
-        $html .= html_writer::empty_tag('br');
-
+        $html .= self::ferpa_control($disagree);
         $html .= html_writer::start_tag('div', array('class' => 'export_button'));
         $html .= html_writer::empty_tag('input', array(
             'id'    => 'export',

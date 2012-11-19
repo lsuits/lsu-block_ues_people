@@ -27,6 +27,7 @@ $silast = optional_param('silast', 'all', PARAM_TEXT);
 $sifirst = optional_param('sifirst', 'all', PARAM_TEXT);
 
 $agree_ferpa = optional_param('FERPA',null,PARAM_INT);
+$disagree = optional_param('disagree',null,PARAM_INT);
 
 $export_params = array(
     'roleid' => $roleid,
@@ -226,7 +227,7 @@ $sql = "$select $from $where $sort";
 if ($data = data_submitted()) {
 
     if(!$agree_ferpa){        
-        header('Location: '.$PAGE->url);
+        redirect(new moodle_url($PAGE->url, array('disagree' => 1)));
     }
 
     $controls = ues_people::control_elements($meta_names);
@@ -445,6 +446,6 @@ echo html_writer::end_tag('div');
 echo $paging_bar;
 
 echo ues_people::show_links($export_params, $count, $perpage);
-echo ues_people::controls($export_params, $meta_names);
+echo ues_people::controls($export_params, $meta_names, $disagree);
 
 echo $OUTPUT->footer();
