@@ -184,7 +184,7 @@ abstract class ues_people {
         );
         $attr['style'] = is_null($disagree) ? null : "color:red"; 
 
-        $ferpa_warning  = html_writer::tag('span',get_string('missing_ferpa_required', 'grades'), $attr); 
+        $ferpa_warning  = html_writer::tag('span',get_string('ferpa_required', 'grades'), $attr); 
         unset($attr);
 
         //build checkbox
@@ -201,7 +201,7 @@ abstract class ues_people {
 
         //output ferpa
         $html  = html_writer::empty_tag('br');
-        $html .= html_writer::tag('p', $ferpa_warning." ".$ferpa_check, array('id' => 'id_ferpa_required'));
+        $html .= html_writer::tag('p', $ferpa_check." ".$ferpa_warning, array('id' => 'id_ferpa_required'));
         $html .= html_writer::empty_tag('br');
         return $html;
     }
