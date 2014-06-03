@@ -23,7 +23,7 @@
  */
 
 $string['pluginname'] = 'UES People';
-
+$string['downloadconfirm'] = 'I assume the responsibility of guarding this data on my local drive.';
 $string['eventalllogsviewed'] = "Viewed all UES People logs";
 
 $string['canonicalname'] = 'Course Roster';
