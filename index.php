@@ -80,7 +80,7 @@ if (empty($all_sections)) {
 
 require_login($course);
 
-$context = get_context_instance(CONTEXT_COURSE, $id);
+$context = context_course::instance($id);
 
 require_capability('moodle/course:viewparticipants', $context);
 
@@ -165,15 +165,21 @@ if ($currentgroup) {
     $group = groups_get_group($currentgroup);
 }
 
-$select = 'SELECT u.id, u.firstname, u.lastname, u.email, ues.sec_number, u.deleted,
+$upicfields = user_picture::fields('u');
+
+$select = sprintf('SELECT %s, u.email, ues.sec_number, u.deleted,
                   u.username, u.idnumber, u.picture, u.imagealt, u.lang, u.timezone,
-                  ues.credit_hours, ues.student_audit';
+                  ues.credit_hours, ues.student_audit', $upicfields);
 $joins = array('FROM {user} u');
 
 list($esql, $params) = get_enrolled_sql($context, NULL, $currentgroup, true);
 $joins[] = "JOIN ($esql) e ON e.id = u.id";
 
-list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'ctx');
+// See comments in deprecatedlib.php for context_instance_preload_sql().
+$ccselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
+$ccjoin   = sprintf("LEFT JOIN {context} ctx ON (ctx.instanceid = u.id AND ctx.contextlevel = %s)", CONTEXT_USER);
+
+
 $select .= $ccselect;
 $joins[] = $ccjoin;
 
