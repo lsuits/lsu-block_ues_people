@@ -1,4 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+
+/**
+ *
+ * @package    block_ues_people
+ * @copyright  2014 Louisiana State University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 require_once '../../config.php';
 require_once $CFG->dirroot . '/enrol/ues/publiclib.php';
@@ -58,7 +80,7 @@ if (empty($all_sections)) {
 
 require_login($course);
 
-$context = get_context_instance(CONTEXT_COURSE, $id);
+$context = context_course::instance($id);
 
 require_capability('moodle/course:viewparticipants', $context);
 
@@ -104,7 +126,11 @@ $isseparategroups = (
     !has_capability('moodle/site:accessallgroups', $context)
 );
 
-add_to_log($course->id, 'ues_people', 'view all', 'index.php?id='.$course->id, '');
+$event = \block_ues_people\event\all_ues_logs_viewed::create(array(
+    'context' => $PAGE->context,
+));
+$event->add_record_snapshot('course', $PAGE->course);
+$event->trigger();
 
 $meta_names = ues_people::outputs($course);
 
@@ -139,15 +165,21 @@ if ($currentgroup) {
     $group = groups_get_group($currentgroup);
 }
 
-$select = 'SELECT u.id, u.firstname, u.lastname, u.email, ues.sec_number, u.deleted,
+$upicfields = user_picture::fields('u');
+
+$select = sprintf('SELECT %s, u.email, ues.sec_number, u.deleted,
                   u.username, u.idnumber, u.picture, u.imagealt, u.lang, u.timezone,
-                  ues.credit_hours, ues.student_audit';
+                  ues.credit_hours, ues.student_audit', $upicfields);
 $joins = array('FROM {user} u');
 
 list($esql, $params) = get_enrolled_sql($context, NULL, $currentgroup, true);
 $joins[] = "JOIN ($esql) e ON e.id = u.id";
 
-list($ccselect, $ccjoin) = context_instance_preload_sql('u.id', CONTEXT_USER, 'ctx');
+// See comments in deprecatedlib.php for context_instance_preload_sql().
+$ccselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
+$ccjoin   = sprintf("LEFT JOIN {context} ctx ON (ctx.instanceid = u.id AND ctx.contextlevel = %s)", CONTEXT_USER);
+
+
 $select .= $ccselect;
 $joins[] = $ccjoin;
 
@@ -200,8 +232,9 @@ if ($silast != 'all') {
 
 if ($roleid) {
     $params['roleid'] = $roleid;
-    $contextlist = get_related_contexts_string($context);
 
+    $contextids  = $context->get_parent_context_ids(true);
+    $contextlist = sprintf("IN (%s)", implode(',',$contextids));
     $sub = 'SELECT userid FROM {role_assignments} WHERE roleid = :roleid AND contextid ' . $contextlist;
 
     $wheres->id->raw("IN ($sub)");
