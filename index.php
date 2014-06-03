@@ -232,8 +232,9 @@ if ($silast != 'all') {
 
 if ($roleid) {
     $params['roleid'] = $roleid;
-    $contextlist = get_related_contexts_string($context);
 
+    $contextids  = $context->get_parent_context_ids(true);
+    $contextlist = sprintf("IN (%s)", implode(',',$contextids));
     $sub = 'SELECT userid FROM {role_assignments} WHERE roleid = :roleid AND contextid ' . $contextlist;
 
     $wheres->id->raw("IN ($sub)");
