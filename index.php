@@ -255,6 +255,7 @@ if ($using_meta_sort) {
     $sort = 'ORDER BY u.' . $meta . ' ' . $sortdir;
 }
 
+// @TODO This query assumes that no user will exist in more than one section of the same course.
 $sql = "$select $from $where $sort";
 
 if ($data = data_submitted()) {

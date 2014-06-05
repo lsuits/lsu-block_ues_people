@@ -30,7 +30,6 @@ $plugin->component = 'block_ues_people';
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = 'v1.2.0';
 
-
 $plugin->dependencies = array(
-    'enrol_ues' => 2013051400,
+    'enrol_ues' => 2013081007,
 );
