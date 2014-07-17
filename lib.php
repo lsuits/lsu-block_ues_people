@@ -135,7 +135,7 @@ abstract class ues_people {
 
     public static function control_elements($meta_names) {
         $defaults = array(
-            'fullname' => get_string('fullname'),
+            'fullname' => get_string('alternatename') . ' (' . get_string('firstname') . ') ' . get_string('lastname'),
             'username' => get_string('username'),
             'idnumber' => get_string('idnumber')
         );

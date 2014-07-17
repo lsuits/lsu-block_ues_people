@@ -283,8 +283,13 @@ if ($data = data_submitted()) {
                 }
 
                 if ($meta == 'fullname') {
-                    $line[] = '"' . $user->firstname . '"';
-                    $line[] = '"' . $user->lastname . '"';
+                    if (isset($user->alternatename)) {
+                        $line[] = '"' . $user->alternatename . ' (' . $user->firstname . ')' . '"';
+                        $line[] = '"' . $user->lastname . '"';
+                    } else {
+                        $line[] = '"' . $user->firstname . '"';
+                        $line[] = '"' . $user->lastname . '"';
+                    }
                 } else {
                     $line[] = '"' . strip_tags($output->format($user)) . '"';
                 }
@@ -392,7 +397,8 @@ $user_fields = array(
 $meta_names = array_merge($user_fields, $meta_names);
 
 $name = new html_table_cell(
-    ues_people::sortable($sort_url, get_string('firstname'), 'firstname') . ' / ' .
+    ues_people::sortable($sort_url, get_string('firstname'), 'firstname') .
+    ' (' . get_string('alternatename') . ') ' .
     ues_people::sortable($sort_url, get_string('lastname'), 'lastname')
 );
 $name->attributes['class'] = 'fullname';
@@ -432,7 +438,11 @@ $to_row = function ($user) use ($OUTPUT, $meta_names, $id) {
     $pic = new html_table_cell($OUTPUT->user_picture($underlying, array('course' => $id)));
     $pic->attributes['class'] = 'fullname';
 
-    $cell= new html_table_cell(html_writer::link($user_url, fullname($user)));
+    if (isset($user->alternatename)) { 
+        $cell= new html_table_cell(html_writer::link($user_url, $user->alternatename . ' (' . $user->firstname . ') ' . $user->lastname));
+    } else {
+        $cell= new html_table_cell(html_writer::link($user_url, fullname($user)));
+    }
     $cell->attributes['class'] = 'fullname';
 
     if (ues_people::is_filtered('fullname')) {
