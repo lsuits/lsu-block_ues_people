@@ -128,7 +128,7 @@ abstract class ues_people {
         $data->outputs = $outputs;
 
         // Plugin interference
-        events_trigger('ues_people_outputs', $data);
+        events_trigger_legacy('ues_people_outputs', $data);
 
         return $data->outputs;
     }
