@@ -30,7 +30,7 @@ class block_ues_people extends block_list {
         $this->title = get_string('pluginname', 'block_ues_people');
     }
 
-    function applicable_format() {
+    function applicable_formats() {
         return array('course' => true, 'site' => false, 'my' => false);
     }
 
