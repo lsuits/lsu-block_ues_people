@@ -50,7 +50,7 @@ class block_ues_people extends block_list {
 
         if (!$permission) {
             require_once $CFG->dirroot . '/enrol/ues/publiclib.php';
-            ues::require_daos();
+            ues::requireDaoLibs();
             $sections = ues_section::from_course($COURSE);
 
             if (empty($sections)) {

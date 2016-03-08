@@ -25,7 +25,7 @@ defined('MOODLE_INTERNAL') or die();
 
 if ($ADMIN->fulltree) {
     require_once $CFG->dirroot . '/enrol/ues/publiclib.php';
-    ues::require_daos();
+    ues::requireDaoLibs();
 
     $defaults = array('sec_number', 'credit_hours');
     $user_meta = array_merge($defaults, ues_user::get_meta_names());
