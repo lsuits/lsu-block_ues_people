@@ -122,21 +122,18 @@ abstract class ues_people {
             $outputs[$meta] = $element;
         }
 
-        // Little information about where the user is coming from
-        // $data = new stdClass;
-        // $data->course = $course;
-        // $data->outputs = $outputs;
-
-        // if installed, allow CPS to manipulate this output data
+        // if installed, allow CPS to add meta data to output
         $cpsResponse = ues_people::handlePreferences('add_meta_data_to_output', array(
             'output' => $outputs
         ));
 
         $outputs = $cpsResponse['output'];
 
-        // global $CFG;
-        // require_once $CFG->dirroot.'/blocks/post_grades/events.php';
-        // $data = post_grades_handler::ues_people_outputs($data);
+        // if installed, allow CPS to add audit data to output
+        $cpsResponse = ues_people::handlePreferences('add_audit_data_to_output', array(
+            'course' => $course,
+            'output' => $outputs
+        ));
 
         return $outputs;
     }
