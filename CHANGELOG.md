@@ -1,3 +1,7 @@
+# v3.0.0
+
+- Removed firing `ues_people_outputs` in favor of utilizing CPS manipulator
+- Moodle 3.1 compatibility
 
 # v1.2.0
 

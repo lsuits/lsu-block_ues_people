@@ -123,22 +123,22 @@ abstract class ues_people {
         }
 
         // Little information about where the user is coming from
-        $data = new stdClass;
-        $data->course = $course;
-        $data->outputs = $outputs;
+        // $data = new stdClass;
+        // $data->course = $course;
+        // $data->outputs = $outputs;
 
-        // Plugin interference
-        /**
-         * Refactoring of 
-         * events_trigger_legacy('ues_people_outputs', $data);
-         */
-        global $CFG;
-        require_once $CFG->dirroot.'/blocks/post_grades/events.php';
-        require_once $CFG->dirroot.'/blocks/cps/events/ues_people.php';
-        $data = cps_ues_people_handler::ues_people_outputs($data);
-        $data = post_grades_handler::ues_people_outputs($data);
+        // if installed, allow CPS to manipulate this output data
+        $cpsResponse = ues_people::handlePreferences('add_meta_data_to_output', array(
+            'output' => $outputs
+        ));
 
-        return $data->outputs;
+        $outputs = $cpsResponse['output'];
+
+        // global $CFG;
+        // require_once $CFG->dirroot.'/blocks/post_grades/events.php';
+        // $data = post_grades_handler::ues_people_outputs($data);
+
+        return $outputs;
     }
 
     public static function control_elements($meta_names) {
@@ -295,6 +295,64 @@ abstract class ues_people {
         $html .= $OUTPUT->box_end();
 
         return $html;
+    }
+
+    /**
+     * Handles UES People/CPS data interjection, if any, for the given event name and returns possibly mutated
+     *
+     * If CPS is not installed on this moodle instance, return the original data
+     * 
+     * @param  string  $eventName
+     * @param  array   $data
+     * @return array
+     */
+    public static function handlePreferences($eventName, $data) {
+
+        global $CFG;
+
+        // if CPS is not installed, take no action and return original data
+        if ( ! file_exists($CFG->dirroot . '/blocks/cps/classes/manipulator.php'))
+            return $data;
+
+        // require manipulator libs
+        require_once $CFG->dirroot . '/blocks/cps/classes/manipulator.php';
+
+        // dispatch and handle the event
+        $response = cps_manipulator::handle('block_ues_people', $eventName, $data);
+
+        return $response;
+    }
+}
+
+class cps_people_element extends ues_people_element_output {
+    private function span_yes() {
+        $values = explode('_', $this->field);
+        $class = end($values);
+        return html_writer::tag('span', 'Y', array('class' => "$class yes"));
+    }
+
+    public function format($user) {
+        switch ($this->field) {
+            case 'user_ferpa':
+            case 'user_degree':
+                return !empty($user->{$this->field}) ? $this->span_yes() : 'N';
+            case 'user_reg_status':
+                return isset($user->{$this->field}) ?
+                    date('m-d-Y', $user->{$this->field}) : '';
+            default:
+                return parent::format($user);
+        }
+    }
+}
+
+class post_grades_audit_people extends ues_people_element_output {
+    function __construct() {
+        $str = get_string('student_audit', 'block_post_grades');
+        parent::__construct('student_audit', $str);
+    }
+
+    function format($user) {
+        return empty($user->student_audit) ? 'N' : 'Y';
     }
 }
 
