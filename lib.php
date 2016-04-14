@@ -133,10 +133,16 @@ abstract class ues_people {
          * events_trigger_legacy('ues_people_outputs', $data);
          */
         global $CFG;
-        require_once $CFG->dirroot.'/blocks/post_grades/events.php';
-        require_once $CFG->dirroot.'/blocks/cps/events/ues_people.php';
-        $data = cps_ues_people_handler::ues_people_outputs($data);
-        $data = post_grades_handler::ues_people_outputs($data);
+
+        if(file_exists($CFG->dirroot.'/blocks/cps/events/ues_people.php')){
+            require_once $CFG->dirroot.'/blocks/cps/events/ues_people.php';
+            $data = cps_ues_people_handler::ues_people_outputs($data);
+        }
+
+        if(file_exists($CFG->dirroot.'/blocks/post_grades/events.php')){
+            require_once $CFG->dirroot.'/blocks/post_grades/events.php';
+            $data = post_grades_handler::ues_people_outputs($data);
+        }
 
         return $data->outputs;
     }
