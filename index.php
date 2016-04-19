@@ -169,7 +169,7 @@ if ($currentgroup) {
 $upicfields = user_picture::fields('u');
 
 $select = sprintf('SELECT DISTINCT(ues.userid) AS ui, %s, ues.sn AS sec_number, u.deleted,
-                  u.username, u.idnumber, u.lang, u.timezone, ues.credit_hours, ues.student_audit', $upicfields);
+                  u.username, u.email, u.idnumber, u.lang, u.timezone, ues.credit_hours, ues.student_audit', $upicfields);
 $joins = array('FROM {user} u');
 
 list($esql, $params) = get_enrolled_sql($context, NULL, $currentgroup, true);
@@ -444,6 +444,7 @@ $sort_url = $base_with_params(array(
 
 $user_fields = array(
     'username' => new ues_people_element_output('username', get_string('username')),
+    'email' => new ues_people_element_output('email', get_string('email')),
     'idnumber' => new ues_people_element_output('idnumber', get_string('idnumber'))
 );
 

@@ -151,6 +151,7 @@ abstract class ues_people {
         $defaults = array(
             'fullname' => get_string('alternatename') . ' (' . get_string('firstname') . ') ' . get_string('lastname'),
             'username' => get_string('username'),
+            'email' => get_string('email'),
             'idnumber' => get_string('idnumber')
         );
 
