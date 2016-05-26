@@ -323,7 +323,7 @@ if ($data = data_submitted()) {
     if (isset($data->export)) {
         $filename = $course->idnumber . '.csv';
 
-        header('Context-Type: text/csv');
+        header('Content-Type: text/csv');
         header('Content-Disposition: attachment; fileName=' . $filename);
 
         $to_csv = function ($user) use ($data, $controls) {
