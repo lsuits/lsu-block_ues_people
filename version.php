@@ -16,20 +16,19 @@
 
 
 /**
- * @package   plugintype_pluginname
+ * @package   block_ues_people
  * @copyright 2014, Louisiana State University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
  
 defined('MOODLE_INTERNAL') || die();
 
-
-$plugin->version   = 2013062818;
-$plugin->requires  = 2013051400;
+$plugin->version = 2016091300;
+$plugin->requires = 2013051400;
 $plugin->component = 'block_ues_people';
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.2.0';
+$plugin->maturity = MATURITY_STABLE;
+$plugin->release = 'v1.2.0';
 
 $plugin->dependencies = array(
-    'enrol_ues' => 2013081007,
+    'enrol_ues' => 2016083000,
 );
