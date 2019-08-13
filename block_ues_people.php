@@ -105,6 +105,7 @@ class block_ues_people extends block_list {
 
         // Set up the course content.
         $content = new stdClass;
+        $content->icons = array();
         $content->footer = '';
         $this->content = $content;
 
